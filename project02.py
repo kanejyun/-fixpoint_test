@@ -38,29 +38,33 @@ def detect_failures(logs,n):#logの中で連続n回以上タイムアウトだ�
                     #タイムアウト状態ではなかったら何もしない
                 
     for address in failures.keys():
+        if failures[address][0]< n : #復活してないがタイムアウト回数がn回未満は消す
+            failures[address].pop()
         failures[address][0] = len(failures[address])-1 #記録が終わったので全部何回のタイムアウトが起こったのかに書き直す
     return failures#log分析した内容を返す
 
 def print_failures(failures):
+    failures_log = []
     if failures :
         for address in failures.keys():
-            print(f"{address} time-out {failures[address][0]} times")
+            failures_log += [f"{address} time-out {failures[address][0]} times"]
             for i in range(1,failures[address][0]+1):
                 start_time = failures[address][i]["start_time"]
                 if failures[address][i]["end_time"] == '-':
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now.")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now."]
                 else :
                     end_time = failures[address][i]["end_time"]
                     duration = end_time - start_time
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}"]
     else :
-        print("everythings are fine")
+        failures_log +=["everythings are fine"]
+    return failures_log
 
 logs = read_monitoring_logs("log.txt")
 
-
-for i in range(6):
-    print(f"n is {i}")
-    failures = detect_failures(logs,i)
-    print_failures(failures)
-    print()
+failures = detect_failures(logs,2)
+failures = print_failures(failures)
+f = open("project02_output.txt","w+")
+for i in range(len(failures)):
+    f.write(f"{failures[i]}\n")
+f.close()

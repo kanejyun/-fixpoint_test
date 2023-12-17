@@ -1,0 +1,6 @@
+192.168.1.2/24 is overloaded. average response time is 11.200
+10.20.30.2/16 is overloaded. average response time is 9.700
+192.168.1.3/24 is down
+10.20.30.1/16 is fine. average response time is 7.500
+10.20.30.3/16 is fine. average response time is 6.000
+192.168.1.1/24 is fine. average response time is 8.667

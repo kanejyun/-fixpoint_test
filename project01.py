@@ -32,24 +32,29 @@ def detect_failures(logs):#
     return failures#log分析した内容を返す
 
 def print_failures(failures):
+    failures_log = []
     if failures :
         for address in failures.keys():
-            print(f"{address} time-out {failures[address][0]} times")
+            failures_log += [f"{address} time-out {failures[address][0]} times"]
             for i in range(1,failures[address][0]+1):
                 start_time = failures[address][i]["start_time"]
                 if failures[address][i]["end_time"] == '-':
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now.")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now."]
                 else :
                     end_time = failures[address][i]["end_time"]
                     duration = end_time - start_time
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}"]
     else :
-        print("everythings are fine")
+        failures_log +=["everythings are fine"]
+    return failures_log
 
 logs = read_monitoring_logs("log.txt")
 
 failures = detect_failures(logs)
-
-print_failures(failures)
+failures = print_failures(failures)
+f = open("project01_output.txt","w+")
+for i in range(len(failures)):
+    f.write(f"{failures[i]}\n")
+f.close()
 
 

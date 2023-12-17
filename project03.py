@@ -37,26 +37,30 @@ def detect_failures(logs,n):#logの中で連続n回以上タイムアウトだ�
                         failures[logs[i][address]][-1]["end_time"] = logs[i][0]#タイムアウト終了時間を記録
                     #タイムアウト状態ではなかったら何もしない
     for address in failures.keys():
+        if failures[address][0]< n : #復活してないがタイムアウト回数がn回未満は消す
+            failures[address].pop()
         failures[address][0] = len(failures[address])-1 #記録が終わったので全部何回のタイムアウトが起こったのかに書き直す
     return failures#log分析した内容を返す
 
 def print_failures(failures):
+    failures_log = []
     if failures :
         for address in failures.keys():
-            print(f"{address} time-out {failures[address][0]} times")
+            failures_log += [f"{address} time-out {failures[address][0]} times"]
             for i in range(1,failures[address][0]+1):
                 start_time = failures[address][i]["start_time"]
                 if failures[address][i]["end_time"] == '-':
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now.")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} until now."]
                 else :
                     end_time = failures[address][i]["end_time"]
                     duration = end_time - start_time
-                    print(f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}")
+                    failures_log += [f"{i} : - From {start_time.strftime("%Y-%m-%d %H:%M:%S")} to {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Duration: {duration}"]
     else :
-        print("everythings are fine")
+        failures_log +=["everythings are fine"]
+    return failures_log
 
 def detect_overload(logs, m):
-    overload = {}#overload = {"count" : pingを送った回数（最大 m）（過負荷状態のときは0）, "average" : 平均応答時間（過負荷状態のときは"overloaded"）}
+    overload = {}#overload = {"count" : pingを送った回数（最大 m）（ダウンのときは0）, "average" : 平均応答時間（ダウンのときは"overloaded"）}
     time = 0#failures上のアドレスを分かりやすくするための設定
     address = 1#logsを分析するとき添え字として使う
     response = 2
@@ -68,7 +72,7 @@ def detect_overload(logs, m):
                 if overload[logs[i][address]]["count"] < m:
                     overload[logs[i][address]]["count"] += 1#応答回数を増やす
                     if  overload[logs[i][address]]["average"] == "overload" :#サーバーが治ったとき
-                        overload[logs[i][address]]["average"] : [logs[i][response]]
+                        overload[logs[i][address]]["average"] = [logs[i][response]]
                     else :
                         overload[logs[i][address]]["average"].append(logs[i][response])#最近(m回まで)の応答時間をリストで保存
                 else :#m回のデータがあるとき
@@ -97,22 +101,26 @@ def check_overload(overload, t):
     return is_overload
             
 def print_overload(overload): #平均応答時間が基準時間tを超えているかによって
+    overload_log = []
     for address in overload.keys():
         if overload[address][0] == False:
             if overload[address][1] == 0:
-                print (f"{address} is down")
+                overload_log += [f"{address} is down"]
             else :
-                print (f"{address} is overloaded. average response time is {overload[address][1] :.3f}")
+                overload_log += [f"{address} is overloaded. average response time is {overload[address][1] :.3f}"]
         else :
-                print (f"{address} is fine")
+                overload_log += [f"{address} is fine. average response time is {overload[address][1] :.3f}"]
+    return overload_log
             
 
-logs = read_monitoring_logs("log_test.txt")
+logs = read_monitoring_logs("log.txt")
 
 
 overload = detect_overload(logs, 10)
-for i in range (3):
-    print(f"t is {(i+1)*100-1}")
-    print_overload(check_overload(overload,(i+1)*100-1))
-    print()
+overload = check_overload(overload,9)
+overload = print_overload(overload)
+f = open("project03_output.txt","w+")
+for i in range(len(overload)):
+    f.write(f"{overload[i]}\n")
+f.close()
     
